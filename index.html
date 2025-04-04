@@ -494,39 +494,49 @@
         }
 
         // إرسال البيانات إلى بوت التليجرام
-        async function sendToTelegram(score, percentage, pdfFile) {
-            const botToken = '7390077316:AAHNEtFesiXM7h6Wp4BmrAr7DluySaa79t4';
-            const chatId = '6670082375';
-            
-            // في تطبيق حقيقي، يجب إرسال البيانات إلى سيرفر وسيط
-            // لأن المتصفحات لا تسمح بإرسال مباشر إلى واجهة برمجة تطبيقات التليجرام
-            
-            // هذا مثال للكود الذي يجب وضعه في السيرفر الوسيط:
-            /*
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('document', pdfFile);
-            formData.append('caption', `نتيجة الاختبار:
+async function sendToTelegram(score, percentage, pdfFile) {
+  const botToken = '7390077316:AAHNEtFesiXM7h6Wp4BmrAr7DluySaa79t4';
+  const chatId = '6670082375';
+  
+  // قراءة ملف PDF كبيانات base64
+  const reader = new FileReader();
+  
+  return new Promise((resolve) => {
+    reader.onload = async function(e) {
+      const fileData = e.target.result.split(',')[1]; // إزالة header البيانات
+      
+      try {
+        const response = await fetch('/api/sendToTelegram', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            botToken: botToken,
+            chatId: chatId,
+            caption: `نتيجة الاختبار:
 الاسم: ${studentInfo.name}
 المرحلة: ${studentInfo.level}
 الكلية: ${studentInfo.college}
-الدرجة: ${score}/${questions.length} (${percentage.toFixed(1)}%)`);
+الدرجة: ${score}/${questions.length} (${percentage.toFixed(1)}%)`,
+            fileData: fileData,
+            fileName: `نتيجة_${studentInfo.name}.pdf`
+          })
+        });
 
-            fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-                method: 'POST',
-                body: formData
-            });
-            */
-            
-            console.log('في تطبيق حقيقي، سيتم إرسال ملف PDF إلى التليجرام عبر سيرفر وسيط');
-            console.log('محتوى الرسالة:', {
-                name: studentInfo.name,
-                level: studentInfo.level,
-                college: studentInfo.college,
-                score: `${score}/${questions.length}`,
-                percentage: percentage.toFixed(1) + '%'
-            });
+        const result = await response.json();
+        if (!result.success) {
+          console.error('فشل إرسال النتائج');
         }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+      resolve();
+    };
+    
+    reader.readAsDataURL(pdfFile);
+  });
+}
     </script>
 </body>
 </html>
